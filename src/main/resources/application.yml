@@ -1,7 +1,29 @@
+# Server Port
 server:
   port: 3000
-  
+
 spring:
+# Console ANSI color
   output:
     ansi:
-      enabled: always
+     enabled: always
+ # JPA Configuration
+  jpa: 
+    show-sql: true
+    properties: 
+      hibernate: 
+        format_sql: false
+    hibernate: 
+      ddl-auto: none
+# H2
+  h2: 
+    console: 
+      enabled: true
+ # Data Source
+  datasource: 
+    driverClassName: org.h2.Driver
+    url: jdbc:h2:mem:stock-market;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ""
+    platform: h2
+    

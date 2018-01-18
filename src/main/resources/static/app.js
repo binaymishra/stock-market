@@ -1,50 +1,34 @@
-var stompClient = null;
+/**
+ * Author: Binay Mishra
+ */
 
-function setConnected(connected) {
-    $("#connect").prop("disabled", connected);
-    $("#disconnect").prop("disabled", !connected);
-    if (connected) {
-        $("#conversation").show();
-    }
-    else {
-        $("#conversation").hide();
-    }
-    $("#greetings").html("");
+//Create stomp client over sockJS protocol
+var socket = new SockJS("/stock-market");
+var stompClient = Stomp.over(socket);
+
+//Render price data from server into HTML, registered as callback
+//when subscribing to price topic
+function renderPrice(frame) {
+	var prices = JSON.parse(frame.body);
+	$('#price').empty();
+	for ( var i in prices) {
+		var price = prices[i];
+		$('#price').append(
+				$('<tr>').append($('<td>').html(price.name),
+						$('<td>').html(price.price.toFixed(2)),
+						$('<td>').html(price.timeStr)));
+	}
 }
 
-function connect() {
-    var socket = new SockJS('/stock-market');
-    stompClient = Stomp.over(socket);
-    stompClient.connect({}, function (frame) {
-        setConnected(true);
-        console.log('Connected: ' + frame);
-        stompClient.subscribe('/topic/greetings', function (greeting) {
-            showGreeting(JSON.parse(greeting.body).content);
-        });
-    });
-}
+// Callback function to be called when stomp client is connected to server
+var connectCallback = function() {
+	stompClient.subscribe('/topic/stock', renderPrice);
+};
 
-function disconnect() {
-    if (stompClient !== null) {
-        stompClient.disconnect();
-    }
-    setConnected(false);
-    console.log("Disconnected");
-}
+//Callback function to be called when stomp client could not connect to server
+var errorCallback = function(error) {
+	alert(error.headers.message);
+};
 
-function sendName() {
-    stompClient.send("/app/hello", {}, JSON.stringify({'name': $("#name").val()}));
-}
-
-function showGreeting(message) {
-    $("#greetings").append("<tr><td>" + message + "</td></tr>");
-}
-
-$(function () {
-    $("form").on('submit', function (e) {
-        e.preventDefault();
-    });
-    $( "#connect" ).click(function() { connect(); });
-    $( "#disconnect" ).click(function() { disconnect(); });
-    $( "#send" ).click(function() { sendName(); });
-});
+// Connect to server via websocket
+stompClient.connect("guest", "guest", connectCallback, errorCallback);
